@@ -9,6 +9,6 @@ https://drive.google.com/drive/folders/17QhKw-_kswtbMwBoYidAR4iMPXnQDCm_?usp=sha
 # Usage with deployed singularity image(sif)
 singularity run --no-home -B {file_path}:/data --nv {path for sif image} {segmentation target filename} . 1;
 
-# -B: path containing model input (recon_to31_nuc.nii), also designated path for output (recon_to31_nuc_deep_agg.nii.gz)
-# . : path for output (linked to -B path by default)
-# 1: Number of GPU to use
+-B: path containing model input (recon_to31_nuc.nii), also designated path for output (recon_to31_nuc_deep_agg.nii.gz)
+. : path for output (linked to -B path by default)
+1: Number of GPU to use
