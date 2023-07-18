@@ -1,0 +1,69 @@
+BootStrap: docker
+From: nvidia/cuda:11.2.2-cudnn8-runtime-ubuntu20.04
+
+%labels
+    APPLICATION_NAME Fetal Cortical Plate Segmentation
+    AUTHOR_NAME Sungmin You
+    AUTHOR_EMAIL sungmin.you@childrens.harvard.edu
+    YEAR 2022
+
+%help
+    Container for fetal cortical plate segmentation. 
+
+%files
+    utils.py /src/deep_util.py
+    fetal_cp_seg_att.py /src/main.py
+    axi.h5 /src/axi.h5
+    cor.h5 /src/cor.h5
+    sag.h5 /src/sag.h5
+    mask31_D10.nii.gz /src/mask31_D10.nii.gz
+    requirements.txt /requirements.txt
+
+%environment
+    # Set system locale
+    PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
+    CUDA=/usr/local/cuda/lib64:/usr/local/cuda-11.2/include:/usr/local/cuda-11.2/lib64
+    LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/.singularity.d/libs:$CUDA
+    #PYTHONPATH=modules:$RDBASE:/usr/local/share/rdkit/rdkit:/usr/local/lib/python3.8/dist-packages/
+    #LANG=en_US.UTF-8
+    #LC_ALL=en_US.UTF-8
+    #LANGUAGE=en_US.UTF-8
+    export PATH=/usr/games:$PATH:$CUDA
+    export LD_LIBRARY_PATH
+    #export SINGULARITY_BIND=$PWD:/data
+    TZ=US/Boston
+    
+%post
+    # Change to tmp directory to download temporary files.
+    cd /tmp
+
+    # Set timezone to avoid tzdata issue
+    TZ=Etc/UTC && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+    # Install essential software, languages and libraries. 
+    apt-get -qq -y update
+    apt-get -qq -y install fortune cowsay
+    apt install --no-install-recommends -y build-essential software-properties-common
+    add-apt-repository -y ppa:deadsnakes/ppa
+    apt install --no-install-recommends -y python3.8 python3-pip python3-setuptools python3-distutils
+
+    # Update python pip.
+    python3 -m pip --no-cache-dir install --upgrade pip wheel
+    python3 -m pip --no-cache-dir install setuptools --upgrade
+
+    # Install packages
+    #python -m pip --no-cache-dir install numpy pandas h5py sklearn scipy matplotlib tqdm nibabel
+
+    # Install Tensorflow.
+    python3 -m pip --no-cache-dir install -r /requirements.txt
+    python3 -m pip install opencv-python==3.4.13.47
+
+    # Cleanup
+    apt-get -qq clean
+    rm -rf /var/lib/apt/lists/*
+    rm -rf /tmp/mpi
+
+%runscript
+    fortune | cowsay
+    #echo "Arguments received: $*"
+    cd /data
+    python3 /src/main.py -input $1 -output $2 -gpu $3
